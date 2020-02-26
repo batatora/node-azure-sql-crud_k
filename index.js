@@ -59,15 +59,41 @@ app.post('/api/users', async function(req, res, next) {
     res.status(400).json({ error: true, message: 'email is already used' });
     return;
   }
-  db.executeQuery(`insert into users (name, email, password, role values ('${req.body.name}', '${req.body.email}', '${req.body.password}', ${req.body.role})`.then(result => {
-    res.send({ data: req.body });
-  })).catch(err => {
+  db.executeQuery(`insert into users (name, email, password, role) values ('${req.body.name}', '${req.body.email}', '${req.body.password}', ${req.body.role})`).then(async result => {
+    const user = await db.executeQuery(`select id, name, email, role from users where email='${req.body.email}'`);
+    res.json({ data: user[0] });
+  }).catch(err => {
     res.status(400).json({ error: true, message: 'unable to add user' });
   });
 });
 
-app.delete('/api/users/:id', function(req, res, next) {
+app.put('/api/users/:id', async function(req, res, next) {
   const id = req.params.id;
+
+  let found = await db.executeQuery(`select * from users where id=id`);
+  if (found.length === 0) {
+    res.status(404).json({ error: true, message: 'user not found' });
+    return;
+  }
+
+  db.executeQuery(`update users set name='${req.body.name}', email='${req.body.email}', password='${req.body.password}', role=${req.body.role} where id=${id}`).then(async () => {
+    const user = await db.executeQuery(`select id, name, email, role from users where email='${req.body.email}'`);
+    res.json({ data: user[0] });
+  }).catch(() => {
+    res.status(400).json({ error: true, message: 'failed to update user'});
+  })
+
+});
+
+app.delete('/api/users/:id', async function(req, res, next) {
+  const id = req.params.id;
+
+  let found = await db.executeQuery(`select * from users where id=id`);
+  if (found.length === 0) {
+    res.status(404).json({ error: true, message: 'user not found' });
+    return;
+  }
+
   db.executeQuery(`delete from users where id=${id}`).then(() => {
     res.json({ message: 'successfully deleted' });
   }).catch(() => {
@@ -75,8 +101,15 @@ app.delete('/api/users/:id', function(req, res, next) {
   });
 });
 
-app.get('/api/users/:id', function(req, res, next) {
+app.get('/api/users/:id', async function(req, res, next) {
   const id = req.params.id;
+
+  let found = await db.executeQuery(`select * from users where id=id`);
+  if (found.length === 0) {
+    res.status(404).json({ error: true, message: 'user not found' });
+    return;
+  }
+
   db.executeQuery(`select id, email, name, role from users where id=${id}`).then(result => {
     res.json({ data: result[0] });
   }).catch((err) => {
