@@ -25,12 +25,13 @@ connection.on("connect", err => {
   }
 });
 
-async function executeSelectQuery(query) {
-    return new Promise(function(resolve) {
+async function executeQuery(query) {
+    return new Promise(function(resolve, reject) {
         const result = [];
         const request = new Request(query, (err, rowCount) => {
             if (err) {
               console.error(err.message);
+              reject(err.message);
             } else {
               resolve(result);
             }
@@ -48,5 +49,5 @@ async function executeSelectQuery(query) {
 }
 
 module.exports = {
-    executeSelectQuery
+    executeQuery
 };
