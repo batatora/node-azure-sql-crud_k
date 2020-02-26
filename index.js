@@ -3,10 +3,10 @@ var app = express();
 var path = require('path');
 var session = require("express-session");
 var passport = require('./passport');
-
+app.use(express.json());
 app.use(express.static('public'));
-
 app.use(session({ secret: "my secret" }));
+
 app.use(passport.initialize());
 app.use(passport.session());
 

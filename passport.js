@@ -7,28 +7,23 @@ passport.serializeUser(function (user, cb) {
 });
 
 passport.deserializeUser(function (id, cb) {
-    db.users.findById(id, function (err, user) {
-        if (err) { return cb(err); }
-        cb(null, user);
-    });
+    db.executeSelectQuery(`select id, email, name, role from users where id=${id}`).then(res => cb(null, res[0]));
 });
 
-passport.use(new LocalStrategy(
+passport.use(new LocalStrategy({ usernameField: 'email', passwordField: 'password' },
     function (email, password, done) {
         console.log(email, password);
-        console.log('using local startegy');
-        return done('hello');
-        // return db.executeSelectQuery(`select email, password, name, role from uses where email='${email}'`).then(result => {
-        //     console.log(result);
-        //     if (result.length === 0) {
-        //         return done(null, false, { message: 'Incorrect email.' });
-        //     }
-        //     const user = result[0];
-        //     if (user.password !== password) {
-        //         return done(null, false, { message: 'Incorrect password.' });
-        //     }
-        //     return done(null, user);    
-        // });
+        return db.executeSelectQuery(`select id, email, password, name, role from users where email='${email}'`).then(result => {
+            console.log(result);
+            if (result.length === 0) {
+                return done(null, false, { message: 'Incorrect email.' });
+            }
+            const user = result[0];
+            if (user.password !== password) {
+                return done(null, false, { message: 'Incorrect password.' });
+            }
+            return done(null, user);
+        });
     }
 ));
 
