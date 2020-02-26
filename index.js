@@ -14,8 +14,12 @@ app.use(passport.session());
 app.get('/login', function(req, res) { res.sendFile(path.join(__dirname + '/public/login.html')); });
 app.get('/signup', function(req, res) { res.sendFile(path.join(__dirname + '/public/signup.html')); });
 
+app.get('/signout', function(req, res) {
+  req.session.user = null;
+  res.redirect('/login');
+});
+
 app.get('/', function(req, res) {
-  console.log(req.session.user);
   if (!req.session.user) {
     return res.redirect('/login');
   }
@@ -73,16 +77,19 @@ app.post('/api/users', async function(req, res, next) {
 app.put('/api/users/:id', async function(req, res, next) {
   const id = req.params.id;
 
-  let found = await db.executeQuery(`select * from users where id=id`);
+  let found = await db.executeQuery(`select * from users where id=${id}`);
   if (found.length === 0) {
     res.status(404).json({ error: true, message: 'user not found' });
     return;
   }
 
-  db.executeQuery(`update users set name='${req.body.name}', email='${req.body.email}', password='${req.body.password}', role=${req.body.role} where id=${id}`).then(async () => {
+  const query = `update users set name='${req.body.name}', email='${req.body.email}', role=${req.body.role} where id=${id}`;
+  console.log(query);
+  db.executeQuery(query).then(async () => {
     const user = await db.executeQuery(`select id, name, email, role from users where email='${req.body.email}'`);
     res.json({ data: user[0] });
-  }).catch(() => {
+  }).catch(error => {
+    console.log(error);
     res.status(400).json({ error: true, message: 'failed to update user'});
   })
 
@@ -91,7 +98,7 @@ app.put('/api/users/:id', async function(req, res, next) {
 app.delete('/api/users/:id', async function(req, res, next) {
   const id = req.params.id;
 
-  let found = await db.executeQuery(`select * from users where id=id`);
+  let found = await db.executeQuery(`select * from users where id=${id}`);
   if (found.length === 0) {
     res.status(404).json({ error: true, message: 'user not found' });
     return;
@@ -107,7 +114,7 @@ app.delete('/api/users/:id', async function(req, res, next) {
 app.get('/api/users/:id', async function(req, res, next) {
   const id = req.params.id;
 
-  let found = await db.executeQuery(`select * from users where id=id`);
+  let found = await db.executeQuery(`select * from users where id=${id}`);
   if (found.length === 0) {
     res.status(404).json({ error: true, message: 'user not found' });
     return;
@@ -120,6 +127,10 @@ app.get('/api/users/:id', async function(req, res, next) {
   });
 });
 
-app.listen(4000, function () {
-  console.log('Example app listening on port 4000!');
+app.get('/api/profile', function(req, res, next) {
+  res.json({ name: req.session.user.name, role: req.session.user.role });
+});
+
+app.listen(443, '0.0.0.0', function () {
+  console.log('Example app listening on port 443!');
 });
