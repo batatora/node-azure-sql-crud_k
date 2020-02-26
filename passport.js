@@ -3,11 +3,11 @@ var passport = require('passport')
 var db = require('./db');
 
 passport.serializeUser(function (user, cb) {
-    cb(null, user.email);
+    cb(null, user.id);
 });
 
-passport.deserializeUser(function (email, cb) {
-    db.executeQuery(`select email, name, role from users where email=${email}`).then(res => cb(null, res[0]));
+passport.deserializeUser(function (id, cb) {
+    db.executeQuery(`select id, email, name, role from users where id=${id}`).then(res => cb(null, res[0]));
 });
 
 passport.use(new LocalStrategy({ usernameField: 'email', passwordField: 'password' },

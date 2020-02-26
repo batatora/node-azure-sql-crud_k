@@ -13,9 +13,8 @@ app.use(passport.session());
 
 app.get('/login', function(req, res) { res.sendFile(path.join(__dirname + '/public/login.html')); });
 app.get('/signup', function(req, res) { res.sendFile(path.join(__dirname + '/public/signup.html')); });
-app.get('/customer', function(req, res) { res.sendFile(path.join(__dirname + '/public/customer.html')); });
-app.get('/admin', function(req, res) { res.sendFile(path.join(__dirname + '/public/admin.html')); });
-app.get('/staff', function(req, res) { res.sendFile(path.join(__dirname + '/public/staff.html')); });
+app.get('/home', function(req, res) { res.sendFile(path.join(__dirname + '/public/home.html')); });
+app.get('/dashboard', function(req, res) { res.sendFile(path.join(__dirname + '/public/dashboard.html')); });
 
 app.get('/home', function(req, res) {
   console.log(req.user);
@@ -33,11 +32,55 @@ app.post('/api/login', function(req, res, next) {
   })(req, res, next);
 });
 
-app.post('/api/register', function(req, res, next) {
+app.post('/api/register', async function(req, res, next) {
+  const found = await db.executeQuery(`select * from users where email='${req.body.email}'`);
+  if (found.length) {
+    res.status(400).json({ error: true, message: 'email is already used' });
+    return;
+  }
   db.executeQuery(`insert into users (name, email, password, role) values ('${req.body.name}', '${req.body.email}', '${req.body.password}', 2)`).then(result => {
     res.json({ message: 'successfully registered' });
   }).catch(err => {
     res.status(400).json({ error: true, message: 'user registration failed' });
+  });
+});
+
+app.get('/api/users', function(req, res, next) {
+  db.executeQuery('select name, email, role from users').then(result => {
+    res.json({ data: result });
+  }).catch(err => {
+    res.status(400).json({ error: true, message: 'unable to fetch users'});
+  })
+});
+
+app.post('/api/users', async function(req, res, next) {
+  const found = await db.executeQuery(`select * from users where email='${req.body.email}'`);
+  if (found.length) {
+    res.status(400).json({ error: true, message: 'email is already used' });
+    return;
+  }
+  db.executeQuery(`insert into users (name, email, password, role values ('${req.body.name}', '${req.body.email}', '${req.body.password}', ${req.body.role})`.then(result => {
+    res.send({ data: req.body });
+  })).catch(err => {
+    res.status(400).json({ error: true, message: 'unable to add user' });
+  });
+});
+
+app.delete('/api/users/:id', function(req, res, next) {
+  const id = req.params.id;
+  db.executeQuery(`delete from users where id=${id}`).then(() => {
+    res.json({ message: 'successfully deleted' });
+  }).catch(() => {
+    res.status(400).json({ error: true, message: 'unable to delete the user'});
+  });
+});
+
+app.get('/api/users/:id', function(req, res, next) {
+  const id = req.params.id;
+  db.executeQuery(`select id, email, name, role from users where id=${id}`).then(result => {
+    res.json({ data: result[0] });
+  }).catch((err) => {
+    res.status(400).json({ error: true, message: 'unable to get the user details'});
   });
 });
 
