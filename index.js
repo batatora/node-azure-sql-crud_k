@@ -13,21 +13,24 @@ app.use(passport.session());
 
 app.get('/login', function(req, res) { res.sendFile(path.join(__dirname + '/public/login.html')); });
 app.get('/signup', function(req, res) { res.sendFile(path.join(__dirname + '/public/signup.html')); });
-app.get('/home', function(req, res) { res.sendFile(path.join(__dirname + '/public/home.html')); });
-app.get('/dashboard', function(req, res) { res.sendFile(path.join(__dirname + '/public/dashboard.html')); });
 
-app.get('/home', function(req, res) {
-  console.log(req.user);
-  if (!req.user) {
+app.get('/', function(req, res) {
+  console.log(req.session.user);
+  if (!req.session.user) {
     return res.redirect('/login');
   }
-  res.sendFile(path.join(__dirname + '/public/index.html'));
-})
+  if (req.session.user.role === 0 || req.session.user.role === 1) {
+    return res.sendFile(path.join(__dirname + '/public/dashboard.html'));
+  } else {
+    return res.sendFile(path.join(__dirname + '/public/home.html'));
+  }
+});
 
 app.post('/api/login', function(req, res, next) {
   passport.authenticate('local', function(err, user, info) {
     if (err) { return next(err); }
     if (!user) { return res.status(400).json({ error: true, message: 'Authentication failed.' }); }
+    req.session.user = user;
     return res.send({ message: 'login success', user: user });
   })(req, res, next);
 });
@@ -46,7 +49,7 @@ app.post('/api/register', async function(req, res, next) {
 });
 
 app.get('/api/users', function(req, res, next) {
-  db.executeQuery('select name, email, role from users').then(result => {
+  db.executeQuery('select id, name, email, role from users').then(result => {
     res.json({ data: result });
   }).catch(err => {
     res.status(400).json({ error: true, message: 'unable to fetch users'});

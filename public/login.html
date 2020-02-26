@@ -41,13 +41,7 @@
                     $("#error").text(data.message);
                     return;
                 }
-                var user = data.user;
-                console.log(user);
-                if (user.role === 0 || user.role === 1) {
-                    location.href = '/dashboard';
-                } else if (user.role === 2) {
-                    location.href = '/home';
-                }
+                location.href = '/';
             }).catch((error) => {
                 $("#error").text(error.message);
             });

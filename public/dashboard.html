@@ -1,10 +1,34 @@
 <html>
 <head>
-    <title>Dashboard - Basic CRUD test</title>
+    <title>Dashboard</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <style>
+        .width-80 {
+            max-width: 80px;
+            width: 80px;
+            min-width: 80px;
+        }
+    </style>
 </head>
 <body>
-    <table class="table">
+    <div class="container mx-auto">
+        <div class="row my-2">
+            <div id="error"></div>
+        </div>
+        <div class="row my-2">
+            <div class="mr-2"><input type="text" id="name" placeholder="John Doe" class="form-control"></div>
+            <div class="mr-2"><input type="text" id="email" placeholder="john@email.com" class="form-control"></div>
+            <div class="mr-2"><input type="text" id="password" placeholder="password" class="form-control"></div>
+            <div class="mr-2">
+                <select class="form-control" id="role">
+                    <option value="0">Admin</option>
+                    <option value="1">Staff</option>
+                    <option value="2">Customer</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" onclick="onAddUser()">Add</button>
+        </div>
+        <table class="table">
         <thead>
           <tr>
             <th scope="col">#</th>
@@ -16,6 +40,7 @@
         <tbody id="users">
         </tbody>
       </table>
+    </div>
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
@@ -24,42 +49,54 @@
             loadUsers();
         });
         function loadUsers() {
-            $("#users").html();
+            $("#users").html('');
             fetch('/api/users').then(response => response.json()).then(data => {
                 const roleNames = ['Admin', 'Staff', 'Customer'];
-                data.forEach((user, index) => {
+                data.data.forEach((user, index) => {
                     const tr = $('<tr></tr>');
                     tr.append(`<th scope="col">${index + 1}</th>`);
                     tr.append(`<td>${user.name}</td>`);
                     tr.append(`<td>${user.email}</td>`);
                     tr.append(`<td>${roleNames[user.role]}</td>`);
+                    tr.append(`<td class="width-80"><button class="btn btn-warning" onclick="editUser(${user.id})">Edit</td></td>`);
+                    tr.append(`<td class="width-80"><button class="btn btn-danger" onclick="onDeleteUser(${user.id})">Delete</td></td>`);
                     $("#users").append(tr);
                 });
             });
         }
 
+        function onDeleteUser(id) {
+            fetch(`/api/users/${id}`, {
+                method: 'DELETE'
+            }).then(response => response.json()).then(data => {
+                if (data.error) {
+                    $("#error").text(error.message);
+                    return;
+                }
+                loadUsers();
+            }).catch(error => {
+                $("#error").text(error.message);
+            });
+        }
+
         function onAddUser() {
-            fetch('/api/login', {
+            fetch('/api/users', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
+                    name: $('#name').val(),
                     email: $('#email').val(),
-                    password: $("#password").val()
+                    password: $("#password").val(),
+                    role: $("#role").val()
                 })
             }).then(response => response.json()).then(data => {
                 if (data.error) {
                     $("#error").text(data.message);
                     return;
                 }
-                var user = data.user;
-                console.log(user);
-                if (user.role === 0 || user.role === 1) {
-                    location.href = '/dashboard';
-                } else if (user.role === 2) {
-                    location.href = '/home';
-                }
+                loadUsers();
             }).catch((error) => {
                 $("#error").text(error.message);
             });
