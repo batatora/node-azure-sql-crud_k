@@ -21,6 +21,8 @@
           </div>
       </nav>
     <div class="container mx-auto">
+        <h2 id="welcome"></h2>
+        <h4 id="welcome_role"></h4>
         <div class="row my-2">
             <div id="error"></div>
         </div>
@@ -30,9 +32,9 @@
             <div class="mr-2"><input type="text" id="password" placeholder="password" class="form-control"></div>
             <div class="mr-2">
                 <select class="form-control" id="role">
-                    <option value="0">Admin</option>
                     <option value="1">Staff</option>
                     <option value="2">Customer</option>
+                    <option value="0" id="admin_option">Admin</option>
                 </select>
             </div>
             <button class="btn btn-primary" onclick="onAddUser()">Add</button>
@@ -58,6 +60,7 @@
         var users = [];
         $("body").ready(async function() {
             $("#add_bar").hide();
+            $("#admin_option").hide();
             loadProfile();
         });
 
@@ -96,6 +99,7 @@
         }
 
         function loadProfile() {
+            const roleNames = ['Admin', 'Staff', 'Customer'];
             $("#logon_name").html('');
             fetch('/api/profile').then(response => response.json()).then(data => {
                 profile = data;
@@ -103,9 +107,14 @@
                     location.href = '/login';
                 } else {
                     $("#logon_name").text(data.name);
-                    if (profile.role === 0) {
+                    if (profile.role === 0 || profile.role === 1) {
                         $("#add_bar").show();
                     }
+                    if (profile.role === 0) {
+                        $("#admin_option").show();
+                    }
+                    $("#welcome").text(`Welcome ${data.name}.`);
+                    $("#welcome_role").text(`You are ${roleNames[data.role]}.`);
                     loadUsers();
                 }
             });

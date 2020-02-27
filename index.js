@@ -23,11 +23,7 @@ app.get('/', function(req, res) {
   if (!req.session.user) {
     return res.redirect('/login');
   }
-  if (req.session.user.role === 0 || req.session.user.role === 1) {
-    return res.sendFile(path.join(__dirname + '/public/dashboard.html'));
-  } else {
-    return res.sendFile(path.join(__dirname + '/public/home.html'));
-  }
+  return res.sendFile(path.join(__dirname + '/public/dashboard.html'));
 });
 
 app.post('/api/login', function(req, res, next) {
