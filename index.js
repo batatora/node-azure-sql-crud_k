@@ -31,6 +31,9 @@ app.get('/', function(req, res) {
 });
 
 app.post('/api/login', function(req, res, next) {
+  if (!req.body.email && !req.body.password) {
+    return res.status(400).send({ error: true, message: 'Please provide a valid email and password.' });
+  }
   passport.authenticate('local', function(err, user, info) {
     if (err) { return next(err); }
     if (!user) { return res.status(400).json({ error: true, message: 'Authentication failed.' }); }
@@ -40,6 +43,9 @@ app.post('/api/login', function(req, res, next) {
 });
 
 app.post('/api/register', async function(req, res, next) {
+  if (!req.body.email && !req.body.password) {
+    return res.status(400).send({ error: true, message: 'Please provide a valid email and password.' });
+  }
   const found = await db.executeQuery(`select * from users where email='${req.body.email}'`);
   if (found.length) {
     res.status(400).json({ error: true, message: 'email is already used' });
