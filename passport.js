@@ -12,9 +12,7 @@ passport.deserializeUser(function (id, cb) {
 
 passport.use(new LocalStrategy({ usernameField: 'email', passwordField: 'password' },
     function (email, password, done) {
-        console.log(email, password);
         return db.executeQuery(`select email, password, name, role from users where email='${email}'`).then(result => {
-            console.table(result);
             if (result.length === 0) {
                 return done(null, false, { message: 'Incorrect email.' });
             }
