@@ -4,6 +4,7 @@ var path = require('path');
 var session = require("express-session");
 var passport = require('./passport');
 var db = require('./db');
+const { request } = require('express');
 app.use(express.json());
 app.use(express.static('public'));
 app.use(session({ secret: "my secret" }));
@@ -55,6 +56,10 @@ app.post('/api/register', async function(req, res, next) {
 });
 
 app.get('/api/users', function(req, res, next) {
+  if (!req.session.user) {
+    return res.status(401).json({ error: true, message: 'No authentication'});
+  }
+
   db.executeQuery('select id, name, email, role from users').then(result => {
     res.json({ data: result });
   }).catch(err => {
@@ -63,6 +68,12 @@ app.get('/api/users', function(req, res, next) {
 });
 
 app.post('/api/users', async function(req, res, next) {
+  if (!req.session.user) {
+    return res.status(401).json({ error: true, message: 'No authentication'});
+  }
+  if (req.session.user.role !== 0 && req.session.user.role !== 1) {
+    return res.status(401).json({ error: true, message: 'No enough permission'});
+  }
   const found = await db.executeQuery(`select * from users where email='${req.body.email}'`);
   if (found.length) {
     res.status(400).json({ error: true, message: 'email is already used' });
@@ -78,6 +89,13 @@ app.post('/api/users', async function(req, res, next) {
 
 app.put('/api/users/:id', async function(req, res, next) {
   const id = req.params.id;
+  if (!req.session.user) {
+    return res.status(401).json({ error: true, message: 'No authentication'});
+  }
+  if (req.session.user.role !== 0) {
+    return res.status(401).json({ error: true, message: 'No enough permission'});
+  }
+
 
   let found = await db.executeQuery(`select * from users where id=${id}`);
   if (found.length === 0) {
@@ -98,6 +116,13 @@ app.put('/api/users/:id', async function(req, res, next) {
 });
 
 app.delete('/api/users/:id', async function(req, res, next) {
+  if (!req.session.user) {
+    return res.status(401).json({ error: true, message: 'No authentication'});
+  }
+  if (req.session.user.role !== 0) {
+    return res.status(401).json({ error: true, message: 'No enough permission'});
+  }
+
   const id = req.params.id;
 
   let found = await db.executeQuery(`select * from users where id=${id}`);
@@ -114,6 +139,10 @@ app.delete('/api/users/:id', async function(req, res, next) {
 });
 
 app.get('/api/users/:id', async function(req, res, next) {
+  if (!req.session.user) {
+    return res.status(401).json({ error: true, message: 'No authentication'});
+  }
+
   const id = req.params.id;
 
   let found = await db.executeQuery(`select * from users where id=${id}`);
